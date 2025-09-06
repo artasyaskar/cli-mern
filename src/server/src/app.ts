@@ -13,9 +13,12 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
+import authRoutes from './routes/authRoutes';
+
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok' });
 });
+app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 
 // --- Static files and SPA handler for production ---
