@@ -1,6 +1,6 @@
 import request from 'supertest';
 import mongoose from 'mongoose';
-import app from '../../../src/server/src/index';
+import app from '../../../src/server/src/app';
 import Product from '../../../src/server/src/models/Product';
 import Purchase from '../../../src/server/src/models/Purchase';
 import User from '../../../src/server/src/models/User';
@@ -55,8 +55,15 @@ describe('GET /api/products (Aggregation Performance)', () => {
     expect(res.body).toBeInstanceOf(Array);
     expect(res.body.length).toBe(2);
 
-    const productA = res.body.find(p => p.name === 'Product A');
-    const productB = res.body.find(p => p.name === 'Product B');
+    interface ProductResponse {
+      _id: string;
+      name: string;
+      price: number;
+      purchaseCount: number;
+    }
+
+    const productA = res.body.find((p: ProductResponse) => p.name === 'Product A');
+    const productB = res.body.find((p: ProductResponse) => p.name === 'Product B');
 
     expect(productA).toBeDefined();
     expect(productB).toBeDefined();
