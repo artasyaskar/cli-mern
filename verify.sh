@@ -43,10 +43,13 @@ WAIT_LIMIT=24 # 24*5s = 120s timeout
 WAIT_COUNT=0
 # Loop until all containers with a health check are healthy.
 while true; do
+    # Temporarily disable pipefail to prevent grep from exiting the script
+    set +o pipefail
     UNHEALTHY_COUNT=$(docker compose -f "$DOCKER_COMPOSE_FILE" ps -a --format '{{.Service}} {{.Health}}' | grep -v "(healthy)" | grep -c "(unhealthy)")
+    HEALTHY_COUNT=$(docker compose -f "$DOCKER_COMPOSE_FILE" ps -a --format '{{.Service}} {{.Health}}' | grep -c "(healthy)")
+    set -o pipefail
 
     if [ "$UNHEALTHY_COUNT" -eq 0 ]; then
-        HEALTHY_COUNT=$(docker compose -f "$DOCKER_COMPOSE_FILE" ps -a --format '{{.Service}} {{.Health}}' | grep -c "(healthy)")
         if [ "$HEALTHY_COUNT" -gt 0 ]; then
             echo "All services are healthy."
             break
@@ -59,7 +62,7 @@ while true; do
         exit 1
     fi
 
-    echo "Containers not healthy yet (Unhealthy: $UNHEALTHY_COUNT). Waiting 5s..."
+    echo "Containers not healthy yet (Unhealthy: $UNHEALTHY_COUNT, Healthy: $HEALTHY_COUNT). Waiting 5s..."
     sleep 5
     WAIT_COUNT=$((WAIT_COUNT+1))
 done
