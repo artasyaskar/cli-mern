@@ -34,13 +34,11 @@ export const uploadImage = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Please upload a file' });
     }
 
-    // The `req.file` object now comes from multer-s3
-    const imageUrl = (req.file as any).location;
-    if (!imageUrl) {
-      return res.status(500).json({ message: 'Error uploading file to S3' });
-    }
-
+    // In a real app, you'd upload to S3 here.
+    // For this task, we're just saving the path.
+    const imageUrl = `/uploads/${req.file.filename}`;
     product.imageUrl = imageUrl;
+
     const updatedProduct = await product.save();
 
     res.status(200).json({
@@ -49,7 +47,7 @@ export const uploadImage = async (req: Request, res: Response) => {
       product: updatedProduct,
     });
   } catch (error) {
-    console.error('Error in uploadImage controller:', error);
+    console.error('Error uploading image:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };

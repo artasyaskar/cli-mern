@@ -1,30 +1,34 @@
 import multer from 'multer';
-import multerS3 from 'multer-s3';
-import s3Client from '../config/s3';
 import path from 'path';
 
+// Set up storage for uploaded files
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '..', '..', 'uploads'));
+  },
+  filename: (req, file, cb) => {
+    // Generate unique filename with timestamp
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+// File filter to allow only image files
+const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed!'));
+  }
+};
+
+// Create multer instance
 const upload = multer({
-  storage: multerS3({
-    s3: s3Client,
-    bucket: process.env.S3_BUCKET_NAME!,
-    metadata: function (req, file, cb) {
-      cb(null, { fieldName: file.fieldname });
-    },
-    key: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    },
-  }),
-  fileFilter: (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'));
-    }
-  },
+  storage: storage,
+  fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
 });
 
 export default upload;
