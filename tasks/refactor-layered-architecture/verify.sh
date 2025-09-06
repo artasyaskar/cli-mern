@@ -27,7 +27,7 @@ echo "--- Running verification for refactor-layered-architecture ---"
 # Set a unique database for this test run
 export MONGO_URI_TEST="mongodb://localhost:27017/refactor-layered-architecture-$RANDOM"
 
-# Run the specific test file for this task
-npx jest --runInBand "tasks/refactor-layered-architecture/tests/architecture.test.ts"
+# Run the architecture test and the full API test suite
+npx jest --runInBand "tasks/refactor-layered-architecture/tests/architecture.test.ts" "src/server/tests/products.api.test.ts"
 
 echo "✅ refactor-layered-architecture verified"
