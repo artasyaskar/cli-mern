@@ -16,26 +16,56 @@ echo "--- Starting services for devops-docker-healthcheck ---"
 # Use the main docker-compose file for this task
 docker compose -f docker-compose.yml up -d
 
-echo "Waiting for services to initialize and health checks to run..."
-sleep 30 # Wait for health checks to report status
+echo "Waiting for services to become healthy..."
+
+# Wait for Mongo to be healthy
+echo "Waiting for mongo..."
+for i in {1..15}; do
+    if [ "$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q mongo)")" = "healthy" ]; then
+        break
+    fi
+    sleep 4
+done
+if [ "$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q mongo)")" != "healthy" ]; then
+    echo "FAIL: Mongo container did not become healthy in time."
+    docker logs "$(docker compose ps -q mongo)"
+    exit 1
+fi
+
+# Wait for Redis to be healthy, if it exists
+if docker compose ps -q redis > /dev/null 2>&1; then
+    echo "Waiting for redis..."
+    for i in {1..15}; do
+        if [ "$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q redis)")" = "healthy" ]; then
+            break
+        fi
+        sleep 4
+    done
+    if [ "$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q redis)")" != "healthy" ]; then
+        echo "FAIL: Redis container did not become healthy in time."
+        docker logs "$(docker compose ps -q redis)"
+        exit 1
+    fi
+fi
+
 
 echo "--- Verifying container health ---"
 
 # Check Mongo health
-MONGO_HEALTH=$(docker inspect --format '{{.State.Health.Status}}' "$(docker-compose ps -q mongo)")
+MONGO_HEALTH=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q mongo)")
 if [ "$MONGO_HEALTH" != "healthy" ]; then
     echo "FAIL: Mongo container is not healthy. Status: $MONGO_HEALTH"
-    docker logs "$(docker-compose ps -q mongo)"
+    docker logs "$(docker compose ps -q mongo)"
     exit 1
 fi
 echo "PASS: Mongo container is healthy."
 
 # Check Redis health (if it exists in the compose file)
-if docker-compose ps -q redis > /dev/null 2>&1; then
-    REDIS_HEALTH=$(docker inspect --format '{{.State.Health.Status}}' "$(docker-compose ps -q redis)")
+if docker compose ps -q redis > /dev/null 2>&1; then
+    REDIS_HEALTH=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q redis)")
     if [ "$REDIS_HEALTH" != "healthy" ]; then
         echo "FAIL: Redis container is not healthy. Status: $REDIS_HEALTH"
-        docker logs "$(docker-compose ps -q redis)"
+        docker logs "$(docker compose ps -q redis)"
         exit 1
     fi
     echo "PASS: Redis container is healthy."

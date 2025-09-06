@@ -27,7 +27,7 @@ docker compose -f docker-compose.test.yml up -d
 
 # Wait for DB to be ready
 echo "Waiting for database to start..."
-sleep 15
+npx wait-on tcp:27017 --timeout 60000
 
 echo "--- Installing dependencies ---"
 npm ci # For cypress and bcrypt
@@ -46,6 +46,9 @@ echo "--- Starting servers for E2E tests ---"
 
 # Start client in the background
 (cd src/client && npm run dev &)
+
+echo "Waiting for API server to be ready on port 8080..."
+npx wait-on http://localhost:8080 --timeout 120000
 
 echo "Waiting for client server to be ready on port 3000..."
 npx wait-on http://localhost:3000 --timeout 120000

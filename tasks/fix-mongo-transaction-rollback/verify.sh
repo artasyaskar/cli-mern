@@ -18,7 +18,8 @@ echo "--- Starting replica set for fix-mongo-transaction-rollback ---"
 # Use --wait to ensure the replica set is initialized (waits for healthcheck)
 docker compose -f "$COMPOSE_FILE" up -d --wait
 
-echo "--- Installing server dependencies ---"
+echo "--- Installing dependencies ---"
+npm ci
 (cd src/server && npm ci)
 
 echo "--- Running verification for fix-mongo-transaction-rollback ---"

@@ -17,9 +17,10 @@ docker compose -f docker-compose.test.yml up -d
 
 # Wait for services to be ready
 echo "Waiting for services to start..."
-sleep 15
+npx wait-on tcp:27017 --timeout 60000
 
-echo "--- Installing server dependencies ---"
+echo "--- Installing dependencies ---"
+npm ci
 (cd src/server && npm ci)
 
 echo "--- Seeding database for tests ---"
