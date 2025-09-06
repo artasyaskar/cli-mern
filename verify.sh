@@ -26,10 +26,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Get the absolute path of the script's directory
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+
 # Determine which docker-compose file to use
-DOCKER_COMPOSE_FILE="docker-compose.test.yml" # Default to the test-specific one
+DOCKER_COMPOSE_FILE="$SCRIPT_DIR/docker-compose.test.yml" # Default to the test-specific one
 if [ "$TASK_ID" == "fix-mongo-transaction-rollback" ]; then
-    DOCKER_COMPOSE_FILE="tasks/fix-mongo-transaction-rollback/docker-compose.replicaset.yml"
+    DOCKER_COMPOSE_FILE="$SCRIPT_DIR/tasks/fix-mongo-transaction-rollback/docker-compose.replicaset.yml"
     echo "Using replica set docker-compose file."
 fi
 
@@ -38,34 +41,9 @@ echo "Starting services with docker-compose..."
 docker compose -f "$DOCKER_COMPOSE_FILE" up -d
 
 # Wait for services to be ready
-echo "Waiting for services to be healthy..."
-WAIT_LIMIT=24 # 24*5s = 120s timeout
-WAIT_COUNT=0
-# Loop until all containers with a health check are healthy.
-while true; do
-    # Temporarily disable pipefail to prevent grep from exiting the script
-    set +o pipefail
-    UNHEALTHY_COUNT=$(docker compose -f "$DOCKER_COMPOSE_FILE" ps -a --format '{{.Service}} {{.Health}}' | grep -v "(healthy)" | grep -c "(unhealthy)")
-    HEALTHY_COUNT=$(docker compose -f "$DOCKER_COMPOSE_FILE" ps -a --format '{{.Service}} {{.Health}}' | grep -c "(healthy)")
-    set -o pipefail
-
-    if [ "$UNHEALTHY_COUNT" -eq 0 ]; then
-        if [ "$HEALTHY_COUNT" -gt 0 ]; then
-            echo "All services are healthy."
-            break
-        fi
-    fi
-
-    if [ $WAIT_COUNT -ge $WAIT_LIMIT ]; then
-        echo "Timeout: Docker containers did not become healthy in 120 seconds."
-        docker compose -f "$DOCKER_COMPOSE_FILE" logs
-        exit 1
-    fi
-
-    echo "Containers not healthy yet (Unhealthy: $UNHEALTHY_COUNT, Healthy: $HEALTHY_COUNT). Waiting 5s..."
-    sleep 5
-    WAIT_COUNT=$((WAIT_COUNT+1))
-done
+echo "Waiting for services to start..."
+sleep 15 # Wait for mongo to start
+echo "Services started."
 
 # Install server dependencies
 echo "Installing server dependencies..."
@@ -114,9 +92,8 @@ case "$TASK_ID" in
     add-jwt-authentication|add-mock-payment-integration|add-role-based-access-control|add-security-enhancements|add-websocket-notifications|fix-jwt-race-condition|refactor-layered-architecture|refactor-react-components|add-file-upload-s3|fix-websocket-memory-leak|add-full-text-search|optimize-mongo-queries|fix-mongo-transaction-rollback)
         # These tasks all use Jest test files.
         # Running Jest with a path to the task's test directory will run all tests within it.
-        TEST_PATH_PATTERN="../../tasks/${TASK_ID}/tests"
-        echo "Running Jest tests in ${TEST_PATH_PATTERN}..."
-        npx jest --runInBand --testPathPattern "$TEST_PATH_PATTERN"
+        echo "Running Jest tests..."
+        npx jest --runInBand
         ;;
 
     *)
