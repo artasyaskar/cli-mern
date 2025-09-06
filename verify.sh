@@ -65,6 +65,12 @@ if [ "$TASK_ID" == "fix-mongo-transaction-rollback" ]; then
     export MONGO_URI_TEST="mongodb://localhost:27017/test-db-replicaset-${RANDOM}?replicaSet=rs0"
 fi
 
+# S3 Configuration for the tests
+export S3_ENDPOINT="http://localhost:9000"
+export S3_ACCESS_KEY_ID="minioadmin"
+export S3_SECRET_ACCESS_KEY="minioadmin"
+export S3_BUCKET_NAME="test-bucket"
+
 # Most tests run from the root directory to use the correct Jest config
 cd "$SCRIPT_DIR"
 

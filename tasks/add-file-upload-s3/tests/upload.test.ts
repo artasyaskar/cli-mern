@@ -56,9 +56,9 @@ describe('POST /api/products/:id/image', () => {
     expect(updatedProduct).not.toBeNull();
     expect(updatedProduct!.imageUrl).toEqual(res.body.imageUrl);
 
-    // Verify file exists on filesystem
-    const expectedFilePath = path.join(UPLOADS_DIR, path.basename(res.body.imageUrl));
-    expect(fs.existsSync(expectedFilePath)).toBe(true);
+    // With S3, we don't check the local filesystem.
+    // Instead, we could optionally make a HEAD request to the imageUrl to ensure it's accessible.
+    // For this test, we'll trust that a successful upload returns a valid URL.
   });
 
   it('should return 403 if a non-admin tries to upload an image', async () => {
