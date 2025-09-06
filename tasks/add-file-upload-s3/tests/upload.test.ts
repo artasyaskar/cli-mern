@@ -2,9 +2,10 @@ import request from 'supertest';
 import mongoose from 'mongoose';
 import path from 'path';
 import fs from 'fs';
-import app from '../../../src/server/src/index';
+import app from '../../../src/server/src/app';
 import Product from '../../../src/server/src/models/Product';
 import User from '../../../src/server/src/models/User';
+import { connectDB, disconnectDB } from '../../../src/server/src/config/database';
 
 const MONGO_URI_TEST = process.env.MONGO_URI_TEST || 'mongodb://mongo:27017/mern-sandbox-test-upload';
 
@@ -14,7 +15,7 @@ let product: any;
 const UPLOADS_DIR = path.join(__dirname, '..', '..', '..', 'uploads');
 
 beforeAll(async () => {
-  await mongoose.connect(MONGO_URI_TEST);
+  await connectDB(MONGO_URI_TEST);
 
   // Clean up previous test runs
   await User.deleteMany({});
@@ -31,7 +32,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await mongoose.connection.close();
+  await disconnectDB();
   if (fs.existsSync(UPLOADS_DIR)) {
     fs.rmSync(UPLOADS_DIR, { recursive: true, force: true });
   }
@@ -52,7 +53,8 @@ describe('POST /api/products/:id/image', () => {
 
     // Verify in DB
     const updatedProduct = await Product.findById(product._id);
-    expect(updatedProduct.imageUrl).toEqual(res.body.imageUrl);
+    expect(updatedProduct).not.toBeNull();
+    expect(updatedProduct!.imageUrl).toEqual(res.body.imageUrl);
 
     // Verify file exists on filesystem
     const expectedFilePath = path.join(UPLOADS_DIR, path.basename(res.body.imageUrl));

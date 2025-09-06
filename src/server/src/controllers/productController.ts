@@ -1,16 +1,18 @@
 import { Request, Response } from 'express';
 import Product from '../models/Product';
+import productRepository from '../repositories/productRepository';
 
 /**
- * @desc    Get all products
+ * @desc    Get all products with purchase counts
  * @route   GET /api/products
  * @access  Public
  */
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
-    const products = await Product.find({});
+    const products = await productRepository.findAll();
     res.status(200).json(products);
   } catch (error) {
+    console.error('Error fetching products:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };

@@ -4,6 +4,7 @@ import app from '../../../src/server/src/app';
 import Product from '../../../src/server/src/models/Product';
 import Purchase from '../../../src/server/src/models/Purchase';
 import User from '../../../src/server/src/models/User';
+import { connectDB, disconnectDB } from '../../../src/server/src/config/database';
 
 const MONGO_URI_TEST = process.env.MONGO_URI_TEST || 'mongodb://mongo:27017/mern-sandbox-test-aggregation';
 
@@ -13,24 +14,23 @@ let product1Id: string;
 let product2Id: string;
 
 beforeAll(async () => {
-  await mongoose.connect(MONGO_URI_TEST);
+  await connectDB(MONGO_URI_TEST);
 
   // Clean up
   await User.deleteMany({});
   await Product.deleteMany({});
   await Purchase.deleteMany({});
 
-  // Create user
-  const userRes = await request(app).post('/api/auth/register').send({ email: 'agg@test.com', password: 'password123' });
-  userToken = userRes.body.token;
-  const user = await User.findOne({ email: 'agg@test.com' });
-  userId = user!._id;
+  // Create user directly
+  const user = await new User({ email: 'agg@test.com', password: 'password123' }).save() as any;
+  userId = user._id.toString();
+  userToken = 'dummy-token'; // Not used in the test
 
   // Create products
-  const p1 = await new Product({ name: 'Product A', description: 'desc', price: 10, category: 'cat' }).save();
-  product1Id = p1._id;
-  const p2 = await new Product({ name: 'Product B', description: 'desc', price: 20, category: 'cat' }).save();
-  product2Id = p2._id;
+  const p1 = await new Product({ name: 'Product A', description: 'desc', price: 10, category: 'cat' }).save() as any;
+  product1Id = p1._id.toString();
+  const p2 = await new Product({ name: 'Product B', description: 'desc', price: 20, category: 'cat' }).save() as any;
+  product2Id = p2._id.toString();
 
   // Create purchases
   // Product A is purchased 3 times
@@ -42,14 +42,13 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await mongoose.connection.close();
+  await disconnectDB();
 });
 
 describe('GET /api/products (Aggregation Performance)', () => {
   it('should return all products, each with a correct purchaseCount field', async () => {
     const res = await request(app)
-      .get('/api/products')
-      .set('Authorization', `Bearer ${userToken}`);
+      .get('/api/products');
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toBeInstanceOf(Array);
@@ -78,8 +77,7 @@ describe('GET /api/products (Aggregation Performance)', () => {
     const startTime = Date.now();
 
     await request(app)
-      .get('/api/products')
-      .set('Authorization', `Bearer ${userToken}`);
+      .get('/api/products');
 
     const endTime = Date.now();
     const duration = endTime - startTime;
