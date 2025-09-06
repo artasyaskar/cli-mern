@@ -49,7 +49,7 @@ export const uploadImage = async (req: Request, res: Response) => {
       product: updatedProduct,
     });
   } catch (error) {
-    console.error('Detailed error in uploadImage:', error);
+    console.error('Error in uploadImage controller:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };
