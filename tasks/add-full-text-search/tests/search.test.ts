@@ -1,6 +1,6 @@
 import request from 'supertest';
 import mongoose from 'mongoose';
-import app from '../../../src/server/src/index';
+import app from '../../../src/server/src/app';
 import Product from '../../../src/server/src/models/Product';
 
 const MONGO_URI_TEST = process.env.MONGO_URI_TEST || 'mongodb://mongo:27017/mern-sandbox-test-search';
