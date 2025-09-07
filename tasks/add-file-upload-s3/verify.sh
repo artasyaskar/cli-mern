@@ -13,7 +13,8 @@ cleanup() {
 trap cleanup EXIT
 
 echo "--- Starting services for add-file-upload-s3 ---"
-docker compose -f docker-compose.test.yml up -d
+# This test uses local file uploads, so only Mongo is needed.
+docker compose -f docker-compose.test.yml up -d mongo
 
 # Wait for services to be ready
 echo "Waiting for services to start..."

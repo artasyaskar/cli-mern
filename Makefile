@@ -16,7 +16,7 @@ all: setup build serve
 # Builds the Docker images required for the development environment.
 setup:
 	@echo "$(YELLOW)--- Setting up development environment ---$(RESET)"
-	@docker-compose build \
+	@docker compose build \
 		&& echo "$(GREEN)✅ Setup complete$(RESET)" \
 		|| (echo "$(RED)❌ Setup failed$(RESET)" && exit 1)
 
@@ -32,7 +32,7 @@ build:
 # Starts all application services in detached mode.
 serve:
 	@echo "$(YELLOW)--- Starting application stack ---$(RESET)"
-	@docker-compose up -d \
+	@docker compose up -d \
 		&& echo "$(GREEN)✅ Services started$(RESET)" \
 		|| (echo "$(RED)❌ Failed to start services$(RESET)" && exit 1)
 
@@ -40,7 +40,7 @@ serve:
 # Stops and removes all application containers.
 stop:
 	@echo "$(YELLOW)--- Stopping application stack ---$(RESET)"
-	@docker-compose down \
+	@docker compose down \
 		&& echo "$(GREEN)✅ Services stopped$(RESET)" \
 		|| (echo "$(RED)❌ Failed to stop services$(RESET)" && exit 1)
 
@@ -48,7 +48,7 @@ stop:
 # Runs the backend test suite inside the 'api' service container.
 test:
 	@echo "$(YELLOW)--- Running backend tests ---$(RESET)"
-	@docker-compose exec -T api sh -c "cd /app/server && NODE_OPTIONS=--experimental-vm-modules npx jest --config=/app/server/jest.config.js --runInBand --passWithNoTests --no-cache" \
+	@docker compose exec -T -e S3_BUCKET_NAME=test-bucket api sh -c "cd /app/server && NODE_OPTIONS=--experimental-vm-modules npx jest --config=/app/server/jest.config.js --runInBand --passWithNoTests --no-cache" \
 		&& echo "$(GREEN)✅ Tests passed$(RESET)" \
 		|| (echo "$(RED)❌ Tests failed$(RESET)" && exit 1)
 
@@ -61,7 +61,7 @@ lint: lint-server lint-client
 # Runs ESLint for the server-side TypeScript code.
 lint-server:
 	@echo "$(YELLOW)--- Linting server code ---$(RESET)"
-	@docker-compose exec -T api npm run lint \
+	@docker compose exec -T api npm run lint \
 		&& echo "$(GREEN)✅ Server lint passed$(RESET)" \
 		|| (echo "$(RED)❌ Server lint failed$(RESET)" && exit 1)
 
@@ -69,7 +69,7 @@ lint-server:
 # Runs ESLint for the client-side React/TypeScript code.
 lint-client:
 	@echo "$(YELLOW)--- Linting client code ---$(RESET)"
-	@docker-compose exec -T api npm run lint --prefix ../client \
+	@docker compose exec -T api npm run lint --prefix ../client \
 		&& echo "$(GREEN)✅ Client lint passed$(RESET)" \
 		|| (echo "$(RED)❌ Client lint failed$(RESET)" && exit 1)
 
@@ -78,7 +78,7 @@ lint-client:
 # USE WITH CAUTION.
 clean:
 	@echo "$(YELLOW)--- Cleaning up Docker environment (containers, networks, volumes) ---$(RESET)"
-	@docker-compose down -v --remove-orphans \
+	@docker compose down -v --remove-orphans \
 		&& echo "$(GREEN)✅ Cleanup complete$(RESET)" \
 		|| (echo "$(RED)❌ Cleanup failed$(RESET)" && exit 1)
 
@@ -86,4 +86,4 @@ clean:
 # Follows the logs from all services.
 logs:
 	@echo "$(YELLOW)--- Tailing logs ---$(RESET)"
-	@docker-compose logs -f
+	@docker compose logs -f
