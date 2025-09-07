@@ -30,7 +30,7 @@ echo "Waiting for database to start..."
 npx wait-on tcp:27017 --timeout 60000
 
 echo "--- Installing dependencies ---"
-npm ci # For cypress and bcrypt
+npm ci # For cypress
 (cd src/server && npm ci)
 (cd src/client && npm ci)
 
@@ -38,6 +38,7 @@ npm ci # For cypress and bcrypt
 export MONGO_URI="mongodb://localhost:27017/add-e2e-tests-cypress-$RANDOM"
 
 echo "--- Seeding user for E2E tests ---"
+npm install bcryptjs # Install bcryptjs just-in-time for the seeding script
 node "tasks/add-e2e-tests-cypress/tests/seed-user.js"
 
 echo "--- Starting servers for E2E tests ---"
